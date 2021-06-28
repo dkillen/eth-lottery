@@ -11,10 +11,10 @@ const Lottery = contract.fromArtifact("Lottery"); // Loads a compiled contract
 
 describe("Deploying the lottery contract", () => {
   const [platformAdmin, lotteryOwner] = accounts;
-  const maxEntries = 2;
+  const maxEntries = new BN("2");
   const entryFee = new BN("1000000000000000000");
-  const lotteryFee = 400;
-  const platformFee = 200;
+  const lotteryFee = new BN("400");
+  const platformFee = new BN("200");
 
   beforeEach(async () => {
     this.lottery = await Lottery.new(
@@ -38,35 +38,33 @@ describe("Deploying the lottery contract", () => {
   });
 
   it("should set the maximum number of entries", async () => {
-    const result = parseInt(await this.lottery.maxEntries());
-    expect(result).to.equal(maxEntries);
+    const result = await this.lottery.maxEntries();
+    expect(result).to.be.bignumber.equal(maxEntries);
   });
 
   it("should set the lottery entry fee", async () => {
-    const result = web3.utils.fromWei(await this.lottery.entryFee(), "ether");
-    expect(result).to.equal(web3.utils.fromWei(entryFee, "ether"));
+    const result = await this.lottery.entryFee();
+    expect(result).to.be.bignumber.equal(entryFee);
   });
 
   it("should set the platform's fee", async () => {
-    const result = parseInt(await this.lottery.platformFee());
-    expect(result).to.equal(platformFee);
+    const result = await this.lottery.platformFee();
+    expect(result).to.be.bignumber.equal(platformFee);
   });
 
   it("should set the lottery owner's fee", async () => {
-    const result = parseInt(await this.lottery.lotteryFee());
-    expect(result).to.equal(lotteryFee);
+    const result = await this.lottery.lotteryFee();
+    expect(result).to.be.bignumber.equal(lotteryFee);
   });
 
   it("should set the prize pool to zero", async () => {
-    const result = parseInt(
-      web3.utils.fromWei(await this.lottery.pool(), "ether")
-    );
-    expect(result).to.equal(0);
+    const result = await this.lottery.pool();
+    expect(result).to.be.bignumber.equal(new BN("0"));
   });
 
   it("should set the entry count to zero", async () => {
-    const result = parseInt(await this.lottery.entryCount());
-    expect(result).to.equal(0);
+    const result = await this.lottery.entryCount();
+    expect(result).to.be.bignumber.equal(new BN("0"));
   });
 
   it("should set the drawn flag to false", async () => {
@@ -77,10 +75,10 @@ describe("Deploying the lottery contract", () => {
 
 describe("Entering the lottery", () => {
   const [platformAdmin, lotteryOwner, player1, player2, player3] = accounts;
-  const maxEntries = 2;
+  const maxEntries = new BN("2");
   const entryFee = new BN("1000000000000000000");
-  const lotteryFee = 400;
-  const platformFee = 200;
+  const lotteryFee = new BN("400");
+  const platformFee = new BN("200");
 
   beforeEach(async () => {
     this.lottery = await Lottery.new(
@@ -131,14 +129,14 @@ describe("Entering the lottery", () => {
 
   it("should increase the number of entries when a player enters", async () => {
     await this.lottery.enter({ value: entryFee, from: player1 });
-    const result = parseInt(await this.lottery.entryCount());
-    expect(result).to.equal(1);
+    const result = await this.lottery.entryCount();
+    expect(result).to.be.bignumber.equal(new BN("1"));
   });
 
   it("should increase the prize pool when a player enters", async () => {
     await this.lottery.enter({ value: entryFee, from: player1 });
-    const result = parseInt(await this.lottery.pool());
-    expect(result).to.equal(parseInt(entryFee));
+    const result = await this.lottery.pool();
+    expect(result).to.be.bignumber.equal(entryFee);
   });
 
   it("should add the player's address to the entries array", async () => {
@@ -148,8 +146,57 @@ describe("Entering the lottery", () => {
   });
 });
 
-xdescribe("Drawing a winner", () => {});
+describe("Drawing a winner", () => {
+  const [platformAdmin, lotteryOwner, player1, player2, player3] = accounts;
+  const maxEntries = new BN("3");
+  const entryFee = new BN("1000000000000000000");
+  const lotteryFee = new BN("400");
+  const platformFee = new BN("200");
 
-xdescribe("Withrdawing funds", () => {});
+  beforeEach(async () => {
+    this.lottery = await Lottery.new(
+      platformAdmin,
+      lotteryOwner,
+      maxEntries,
+      entryFee,
+      lotteryFee,
+      platformFee
+    );
+    await this.lottery.enter({ value: entryFee, from: player1 });
+    await this.lottery.enter({ value: entryFee, from: player2 });
+    await this.lottery.enter({ value: entryFee, from: player3 });
+  });
+
+  it("should draw a winner", async () => {
+    const result = await this.lottery.drawWinner({ from: lotteryOwner });
+    expectEvent(result, "Winner");
+  });
+});
+
+describe("Withrdawing funds", () => {
+  const [platformAdmin, lotteryOwner, player1, player2, player3] = accounts;
+  const maxEntries = new BN("3");
+  const entryFee = new BN("1000000000000000000");
+  const lotteryFee = new BN("400");
+  const platformFee = new BN("200");
+
+  beforeEach(async () => {
+    this.lottery = await Lottery.new(
+      platformAdmin,
+      lotteryOwner,
+      maxEntries,
+      entryFee,
+      lotteryFee,
+      platformFee
+    );
+    await this.lottery.enter({ value: entryFee, from: player1 });
+    await this.lottery.enter({ value: entryFee, from: player2 });
+    await this.lottery.enter({ value: entryFee, from: player3 });
+  });
+
+  xit("should allow the winnings to be withdrawn", async () => {});
+});
 
 xdescribe("Pausing the contract", () => {});
+
+xdescribe("Access Control", () => {});

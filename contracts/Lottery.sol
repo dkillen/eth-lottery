@@ -17,12 +17,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     bytes32 public constant LOTTERY_OWNER_ROLE = keccak256("LOTTERY_OWNER_ROLE");
     bytes32 public constant PLATFORM_ADMIN_ROLE = keccak256("PLATFORM_ADMIN_ROLE");    
 
-    /// @dev Platform administrator.
-    address payable public platformAdmin;
-   
-    /// @dev Lottery owner.
-    address payable public lotteryOwner;
-   
     /// @dev The amount to be paid for a single entry (in wei).
     uint256 public entryFee;
 
@@ -37,15 +31,19 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
 
     /**
      * @dev To calculate the fees for the lottery owner and the platform.
+     * Expressed in basis points.
      * E.g. 
-     * a value of 200 equates to 0.5%
-     * a value of 400 equates to 0.25%
+     * a value of 50 equates to 0.5%
+     * a value of 150 equates to 1.5%
      */
     uint64 public lotteryFee;   
     uint64 public platformFee;
    
-    /// @dev Has the lottery been drawn?
-    bool public drawn;
+    /// @dev Platform administrator.
+    address payable public platformAdmin;
+   
+    /// @dev Lottery owner.
+    address payable public lotteryOwner;
    
     /// @dev The players - used to check whether an address has entered.
     mapping(address => bool) public players;
@@ -55,6 +53,9 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
    
     /// @dev Mapping to aid tracking pending withdrawals
     mapping(address => uint) private pendingWithdrawals;
+   
+    /// @dev Has the lottery been drawn?
+    bool public drawn;
    
     /**
      * @dev Emitted when an entry is submitted.
@@ -162,15 +163,15 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
         require(entryCount >= maxEntries, "Not enough entries to draw the winner!");
        
         // Temporary - winner address
-        address winner = 0xdD870fA1b7C4700F2BD7f44238821C26f7392148;
+        address winner = entries[getRandomNumber() % entryCount];
        
         // Lottery owner's fee
-        uint lotteryFeeTotal = pool / lotteryFee;
+        uint lotteryFeeTotal = calculateFee(pool, lotteryFee);
         pendingWithdrawals[lotteryOwner] = lotteryFeeTotal;
         pool = pool - lotteryFeeTotal;
        
         // Platform fee
-        uint platformFeeTotal = pool / platformFee;
+        uint platformFeeTotal = calculateFee(pool, platformFee);
         pendingWithdrawals[platformAdmin] = platformFeeTotal;
         pool = pool - platformFeeTotal;
        
@@ -181,8 +182,27 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
        
         drawn = true;
         emit Winner(winner, winnings);
-   }
-   
+    }
+
+    /**
+     *
+     */
+    function getRandomNumber() private view returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp, entryCount)));
+    }
+
+
+    /**
+     * @notice Calculate a fee being a percentage (expressed as basis points) of an amount
+     * @dev this could have problems with very small numbers but, not numbers within the
+     * range expected in a lottery's prize pool. A number that is too small will fail the
+     * bound check and revert.
+     */
+    function calculateFee(uint amount, uint basisPoints) private pure returns (uint256) {
+        require((amount / 10000) * 10000 == amount, "Unable to calculate fee: amount too small");
+        return amount * basisPoints / 10000;
+    }
+
     /**
      * @notice Withdraw of funds from the contract.
      * @dev It is anticipated that this function will be called by the lottery owner, 
