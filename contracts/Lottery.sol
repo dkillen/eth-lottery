@@ -1,3 +1,6 @@
+//
+// Copyright David Killen 2021. All rights reserved.
+//
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
@@ -52,7 +55,7 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     address[] public entries;
    
     /// @dev Mapping to aid tracking pending withdrawals
-    mapping(address => uint) private pendingWithdrawals;
+    mapping(address => uint) public pendingWithdrawals;
    
     /// @dev Has the lottery been drawn?
     bool public drawn;
@@ -168,18 +171,17 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
         // Lottery owner's fee
         uint lotteryFeeTotal = calculateFee(pool, lotteryFee);
         pendingWithdrawals[lotteryOwner] = lotteryFeeTotal;
-        pool = pool - lotteryFeeTotal;
        
         // Platform fee
         uint platformFeeTotal = calculateFee(pool, platformFee);
         pendingWithdrawals[platformAdmin] = platformFeeTotal;
-        pool = pool - platformFeeTotal;
        
         // Winnings
         uint winnings = pool - (pendingWithdrawals[lotteryOwner] + pendingWithdrawals[platformAdmin]);
         pendingWithdrawals[winner] = winnings;
-        pool = pool - winnings;
-       
+
+        pool = pool - lotteryFeeTotal - platformFeeTotal - winnings;
+
         drawn = true;
         emit Winner(winner, winnings);
     }
@@ -190,7 +192,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     function getRandomNumber() private view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp, entryCount)));
     }
-
 
     /**
      * @notice Calculate a fee being a percentage (expressed as basis points) of an amount
@@ -204,7 +205,7 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw of funds from the contract.
+     * @notice Withdraw funds from the contract.
      * @dev It is anticipated that this function will be called by the lottery owner, 
      * platform administrator or a lottery winner
      */
