@@ -18,7 +18,7 @@ describe("Deploying the lottery contract", function () {
   const lotteryFee = new BN("25");
   const platformFee = new BN("50");
 
-  const ZERO = new BN("0");
+  const BN_ZERO = new BN("0");
 
   beforeEach(async () => {
     this.lottery = await Lottery.new(
@@ -63,12 +63,12 @@ describe("Deploying the lottery contract", function () {
 
   it("should set the prize pool to zero", async () => {
     const result = await this.lottery.pool();
-    expect(result).to.be.bignumber.equal(ZERO);
+    expect(result).to.be.bignumber.equal(BN_ZERO);
   });
 
   it("should set the entry count to zero", async () => {
     const result = await this.lottery.entryCount();
-    expect(result).to.be.bignumber.equal(ZERO);
+    expect(result).to.be.bignumber.equal(BN_ZERO);
   });
 
   it("should set the drawn flag to false", async () => {

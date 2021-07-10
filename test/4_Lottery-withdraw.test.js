@@ -22,7 +22,7 @@ describe("Withrdawing funds", function () {
   const expectedLotteryOwnerFee = new BN("7500000000000000");
   const expectedWinnings = new BN("2977500000000000000");
 
-  const ZERO = new BN("0");
+  const BN_ZERO = new BN("0");
 
   beforeEach(async () => {
     this.lottery = await Lottery.new(
@@ -101,6 +101,6 @@ describe("Withrdawing funds", function () {
     await this.lottery.withdraw({ from: platformAdmin });
 
     const balance = await this.lottery.checkBalance({ from: platformAdmin });
-    expect(balance).to.be.bignumber.equal(ZERO);
+    expect(balance).to.be.bignumber.equal(BN_ZERO);
   });
 });

@@ -42,6 +42,9 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     uint64 public lotteryFee;   
     uint64 public platformFee;
    
+    /// @dev Has the lottery been drawn?
+    bool public drawn;
+
     /// @dev Platform administrator.
     address payable public platformAdmin;
    
@@ -56,9 +59,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
    
     /// @dev Mapping to aid tracking pending withdrawals
     mapping(address => uint) public pendingWithdrawals;
-   
-    /// @dev Has the lottery been drawn?
-    bool public drawn;
    
     /**
      * @dev Emitted when an entry is submitted.
@@ -85,6 +85,12 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
      * `pausedBy` is the address that paused the contract.
      */
     event ContractPaused(address pausedBy);
+
+    /**
+     * @dev Emitted when contract is unpaused.
+     * `unpausedBy` is the address that unpaused the contract.
+     */
+    event ContractUnpaused(address unpausedBy);
 
     /**
      * @dev Emitted when funds are withdrawn from the contract.
@@ -160,7 +166,7 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     function drawWinner() public whenNotPaused {
         require(
             hasRole(LOTTERY_OWNER_ROLE, msg.sender) || hasRole(PLATFORM_ADMIN_ROLE, msg.sender), 
-            "Cannot draw the winner!"
+            "You are not authorized to draw a winner!"
         );
 
         require(entryCount >= maxEntries, "Not enough entries to draw the winner!");
@@ -258,10 +264,10 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     function pause() public whenNotPaused {
         require(
             hasRole(LOTTERY_OWNER_ROLE, msg.sender) || hasRole(PLATFORM_ADMIN_ROLE, msg.sender),
-            "You are not authorised to take this action"
+            "You are not authorized to take this action!"
         );
-
         _pause();
+        emit ContractPaused(msg.sender);
     }
 
     /**
@@ -270,10 +276,10 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     function unpause() public whenPaused {
         require(
             hasRole(LOTTERY_OWNER_ROLE, msg.sender) || hasRole(PLATFORM_ADMIN_ROLE, msg.sender),
-            "You are not authorised to take this action"
+            "You are not authorized to take this action!"
         );
-
         _unpause();
+        emit ContractUnpaused(msg.sender);
     }
    
     receive() external payable {

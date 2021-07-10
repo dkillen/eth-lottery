@@ -22,7 +22,7 @@ describe("Drawing a winner", function () {
   const expectedLotteryOwnerFee = new BN("7500000000000000");
   const expectedWinnings = new BN("2977500000000000000");
 
-  const ZERO = new BN("0");
+  const BN_ZERO = new BN("0");
 
   beforeEach(async () => {
     this.lottery = await Lottery.new(
@@ -94,7 +94,7 @@ describe("Drawing a winner", function () {
 
     await this.lottery.drawWinner({ from: lotteryOwner });
     const result = await this.lottery.pool();
-    expect(result).to.be.bignumber.equal(ZERO);
+    expect(result).to.be.bignumber.equal(BN_ZERO);
   });
 
   it("should set the drawn flag to true", async () => {
