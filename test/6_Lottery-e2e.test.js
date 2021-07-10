@@ -9,7 +9,7 @@ const {
 
 const Lottery = contract.fromArtifact("Lottery"); // Loads a compiled contract
 
-xdescribe("End-to-End", function () {
+describe("End-to-End", function () {
   this.timeout(10000);
 
   const [platformAdmin, lotteryOwner, player1, player2, player3] = accounts;
@@ -20,5 +20,5 @@ xdescribe("End-to-End", function () {
 
   const ZERO = new BN("0");
 
-  xit("should work end-to-end without error", async () => {});
+  xit("should work end-to-end", async () => {});
 });

@@ -95,17 +95,65 @@ describe("Pausing the contract", function () {
 
   it("should allow the contract to be paused", async () => {
     let result = await this.lottery.pause({ from: lotteryOwner });
-    expectEvent(result, "ContractPaused", { pausedBy: lotteryOwner });
+    expectEvent(result, "Paused", { account: lotteryOwner });
+
     await this.lottery.unpause({ from: lotteryOwner });
     result = await this.lottery.pause({ from: platformAdmin });
-    expectEvent(result, "ContractPaused", { pausedBy: platformAdmin });
+    expectEvent(result, "Paused", { account: platformAdmin });
   });
 
-  xit("should allow the contract to be unpaused", async () => {});
+  it("should allow the contract to be unpaused", async () => {
+    await this.lottery.pause({ from: lotteryOwner });
+    let result = await this.lottery.unpause({ from: lotteryOwner });
+    expectEvent(result, "Unpaused", { account: lotteryOwner });
 
-  xit("should not allow an entry while paused", async () => {});
+    await this.lottery.pause({ from: platformAdmin });
+    result = await this.lottery.unpause({ from: platformAdmin });
+    expectEvent(result, "Unpaused", { account: platformAdmin });
+  });
 
-  xit("should not allow a winner to be drawn while paused", async () => {});
+  it("should not allow an entry while paused", async () => {
+    await this.lottery.pause({ from: lotteryOwner });
+    await expectRevert(
+      this.lottery.enter({ value: entryFee, from: player1 }),
+      "Pausable: paused"
+    );
+  });
 
-  xit("should not allow withdrawals while paused", () => {});
+  it("should not allow a winner to be drawn while paused", async () => {
+    await this.lottery.enter({ value: entryFee, from: player1 });
+    await this.lottery.enter({ value: entryFee, from: player2 });
+    await this.lottery.enter({ value: entryFee, from: player3 });
+
+    await this.lottery.pause({ from: lotteryOwner });
+    await expectRevert(
+      this.lottery.drawWinner({ from: player3 }),
+      "Pausable: paused"
+    );
+  });
+
+  it("should not allow withdrawals while paused", async () => {
+    await this.lottery.enter({ value: entryFee, from: player1 });
+    await this.lottery.enter({ value: entryFee, from: player2 });
+    await this.lottery.enter({ value: entryFee, from: player3 });
+
+    const result = await this.lottery.drawWinner({ from: lotteryOwner });
+    const winner = result.logs[0].args.winner;
+    await this.lottery.pause({ from: lotteryOwner });
+
+    await expectRevert(
+      this.lottery.withdraw({ from: winner }),
+      "Pausable: paused"
+    );
+
+    await expectRevert(
+      this.lottery.withdraw({ from: lotteryOwner }),
+      "Pausable: paused"
+    );
+
+    await expectRevert(
+      this.lottery.withdraw({ from: platformAdmin }),
+      "Pausable: paused"
+    );
+  });
 });

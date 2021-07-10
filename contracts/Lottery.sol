@@ -81,18 +81,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     event Received(address sender, uint value);
    
     /**
-     * @dev Emitted when contract is paused.
-     * `pausedBy` is the address that paused the contract.
-     */
-    event ContractPaused(address pausedBy);
-
-    /**
-     * @dev Emitted when contract is unpaused.
-     * `unpausedBy` is the address that unpaused the contract.
-     */
-    event ContractUnpaused(address unpausedBy);
-
-    /**
      * @dev Emitted when funds are withdrawn from the contract.
      * `payee` is the address withdrawing funds.
      * `amount` is the amount of funds withdrawn by the payee.
@@ -267,7 +255,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
             "You are not authorized to take this action!"
         );
         _pause();
-        emit ContractPaused(msg.sender);
     }
 
     /**
@@ -279,7 +266,6 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
             "You are not authorized to take this action!"
         );
         _unpause();
-        emit ContractUnpaused(msg.sender);
     }
    
     receive() external payable {
