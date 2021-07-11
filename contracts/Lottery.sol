@@ -149,7 +149,8 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
    
    /**
     * @notice Allow administrators to draw the lottery once all entries are complete
-    * @dev 
+    * @dev Note that this function presently uses the contract's getRandomNumber() function
+    * The getRandomNumber function is to be replaced by a call to a Chainlink VRF
     */
     function drawWinner() public whenNotPaused {
         require(
@@ -181,7 +182,8 @@ contract Lottery is Pausable, AccessControl, ReentrancyGuard {
     }
 
     /**
-     *
+     * @dev It is advisable not to use this contract while random numbers are sourced from this function.
+     * The getRandomNumber() function is to be replaced with a call to a Chainlink VRF.
      */
     function getRandomNumber() private view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp, entryCount)));
