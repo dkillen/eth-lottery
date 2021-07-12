@@ -18,7 +18,53 @@ describe("End-to-End", function () {
   const lotteryFee = new BN("25");
   const platformFee = new BN("50");
 
-  const ZERO = new BN("0");
+  const expectedPlatformFee = new BN("15000000000000000");
+  const expectedLotteryOwnerFee = new BN("7500000000000000");
+  const expectedWinnings = new BN("2977500000000000000");
 
-  xit("should work end-to-end", async () => {});
+  const BN_ZERO = new BN("0");
+
+  it("should work end-to-end", async () => {
+    this.lottery = await Lottery.new(
+      platformAdmin,
+      lotteryOwner,
+      maxEntries,
+      entryFee,
+      lotteryFee,
+      platformFee
+    );
+
+    await this.lottery.enter({ value: entryFee, from: player1 });
+    await this.lottery.enter({ value: entryFee, from: player2 });
+    await this.lottery.enter({ value: entryFee, from: player3 });
+
+    const result = await this.lottery.drawWinner({ from: lotteryOwner });
+    expectEvent(result, "Winner");
+    const winner = result.logs[0].args.winner;
+
+    const winnerReceipt = await this.lottery.withdraw({ from: winner });
+    expectEvent(winnerReceipt, "FundsWithdrawn", {
+      payee: winner,
+      amount: expectedWinnings,
+    });
+
+    const lotteryOwnerReceipt = await this.lottery.withdraw({
+      from: lotteryOwner,
+    });
+    expectEvent(lotteryOwnerReceipt, "FundsWithdrawn", {
+      payee: lotteryOwner,
+      amount: expectedLotteryOwnerFee,
+    });
+
+    const platformAdminReceipt = await this.lottery.withdraw({
+      from: platformAdmin,
+    });
+    expectEvent(platformAdminReceipt, "FundsWithdrawn", {
+      payee: platformAdmin,
+      amount: expectedPlatformFee,
+    });
+
+    const balance = await this.lottery.checkBalance({ from: platformAdmin });
+    expect(balance).to.be.bignumber.equal(BN_ZERO);
+  });
 });
